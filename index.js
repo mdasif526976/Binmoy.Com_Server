@@ -23,9 +23,12 @@ app.get('/products/:id',async(req,res)=>{
   res.send(products)
 })
 
-// admin cheak find 
-app.get('admin/:email',async(req,res)=>{
 
+app.get('/users/admin/:email',async(req,res)=>{
+   const email = req.params.email;;
+   const query = { email: email}
+   const user = await usersCollection.findOne(query);
+   res.send({ isAdmin: user?.type === 'admin' })
 })
 
 // make save user
