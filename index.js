@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const jwt = require('jsonwebtoken');
 require ('dotenv').config();
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -14,11 +15,40 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 const run=async()=>{
   try{     
 const productsCollection = client.db('ecomerce-assignment-12').collection('products')
-app.get('/products',async(req,res)=>{
-  const query = {};
+const usersCollection = client.db('ecomerce-assignment-12').collection('users')
+app.get('/products/:id',async(req,res)=>{
+  const id = req.params.id;
+  const query = {brand: id};
   const products = await productsCollection.find(query).toArray();
   res.send(products)
 })
+
+// admin cheak find 
+app.get('admin/:email',async(req,res)=>{
+
+})
+
+// make save user
+app.post('/users',async(req,res)=>{
+  const user = req.body;
+  const result = await usersCollection.insertOne(user)
+  res.send(result)
+})
+
+
+app.get('/jwt',async(req, res)=>{
+  const email = req.query.email;
+  const query = {
+    email: email
+  }
+  const user = await usersCollection.findOne(query);
+  if (user) {
+    const token = jwt.sign({email},process.env.ACCESS_TOKEN,{expiresIn:'12h'})
+    return res.send({accessToken:token})
+  }
+  res.status(403).send({accessToken:''})
+})
+
 }
   finally{
 
