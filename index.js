@@ -36,7 +36,17 @@ const VerifyAdmin=async(req,res,next)=> {
   }
   next();
 }
-
+// seler middlewore
+const VerifySeller=async(req,res,next)=> {
+  const email = req.decoded.email;
+  const query = {email:email};
+  const user = await usersCollection.findOne(query);
+  if (user?.type !== 'Seller') {
+    return res.status(403).send({ message:'forbidden access'})
+  }
+ 
+   next();
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@atlascluster.ul3fosw.mongodb.net/?retryWrites=true&w=majority`;
@@ -69,7 +79,7 @@ app.get('/users/seller/:email',async(req,res)=>{
 })
 
 // find seler 
-app.get('/users/findSeler/:email',VerifyJwt, async(req,res)=>{
+app.get('/users/findSeler/:email',VerifyJwt,VerifySeller, async(req,res)=>{
    const email = req.params.email ;
    const query = {email: email};
    const user = await usersCollection.findOne(query);
