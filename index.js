@@ -4,11 +4,31 @@ const jwt = require('jsonwebtoken');
 require ('dotenv').config();
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { query } = require('express');
 const port = process.env.PORT || 5000;
 
 //middlewire
 app.use(cors())
 app.use(express.json())
+
+function VerifyJwt(req,res,next) {
+  const authHeader= req.headers.authorization;
+  if(!authHeader){
+   res.status(401).send('unAuthorized access denied');
+  }
+  const token = authHeader.split(' ')[1];
+
+  jwt.verify(token,process.env.ACCESS_TOKEN,function(err, decoded){
+    if(err){
+      return res.status(403).send({ message:'forbidden access'})
+    }
+    req.decoded = decoded;
+    next();
+    })
+
+}
+
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@atlascluster.ul3fosw.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -38,6 +58,14 @@ app.get('/users/seller/:email',async(req,res)=>{
   const user = await usersCollection.findOne(query);
   res.send({ isSeller: user?.type === 'Seller' })
 })
+
+// find seler 
+app.get('/users/findSeler/:email',VerifyJwt, async(req,res)=>{
+   const email = req.params.email ;
+   const query = {email: email};
+   const user = await usersCollection.findOne(query);
+   res.send(user)
+  })
 
 // make save user
 app.post('/users',async(req,res)=>{
