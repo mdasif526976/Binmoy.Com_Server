@@ -32,7 +32,12 @@ app.get('/users/admin/:email',async(req,res)=>{
 })
 
 // cheak seler
-
+app.get('/users/seller/:email',async(req,res)=>{
+  const email = req.params.email;;
+  const query = { email: email}
+  const user = await usersCollection.findOne(query);
+  res.send({ isSeller: user?.type === 'Seller' })
+})
 
 // make save user
 app.post('/users',async(req,res)=>{
