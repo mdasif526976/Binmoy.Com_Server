@@ -26,27 +26,7 @@ function VerifyJwt(req,res,next) {
     next();
     })
 }
-// admin middlewire
-const VerifyAdmin=async(req,res,next)=> {
-  const email = req.decoded.email;
-  const query = {email:email};
-  const user = await usersCollection.findOne(query);
-  if (user.type !== 'admin') {
-    return res.status(403).send({ message:'forbidden access'})
-  }
-  next();
-}
-// seler middlewore
-const VerifySeller=async(req,res,next)=> {
-  const email = req.decoded.email;
-  const query = {email:email};
-  const user = await usersCollection.findOne(query);
-  if (user?.type !== 'Seller') {
-    return res.status(403).send({ message:'forbidden access'})
-  }
- 
-   next();
-}
+
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@atlascluster.ul3fosw.mongodb.net/?retryWrites=true&w=majority`;
@@ -62,9 +42,40 @@ app.get('/products/:id',async(req,res)=>{
   res.send(products)
 })
 
+// middlewires
+// admin middlewire
+const VerifyAdmin=async(req,res,next)=> {
+  const email = req.decoded.email;
+  const query = {email:email};
+  const user = await usersCollection.findOne(query);
+  if (user.type !== 'admin') {
+    return res.status(403).send({ message:'forbidden access'})
+  }
+  next();
+}
+// seler middlewore
+const VerifySeller=async(req,res,next)=> {
+  const email = req.decoded.email;
+  const query = {email:email};
+  const user = await usersCollection.findOne(query);
+  if (user.type !== 'Seller') {
+    return res.status(403).send({ message:'forbidden access'})
+  }
+ 
+   next();
+}
+// middlewires//
+
+// add product
+app.post('/product',VerifyJwt,async(req,res)=>{
+const product = req.body;
+const result = await productsCollection.insertOne(product);
+res.send(result)
+})
+
 // cheak admin
 app.get('/users/admin/:email',async(req,res)=>{
-   const email = req.params.email;;
+   const email = req.params.email;
    const query = { email: email}
    const user = await usersCollection.findOne(query);
    res.send({ isAdmin: user?.type === 'admin' })
