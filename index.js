@@ -25,7 +25,16 @@ function VerifyJwt(req,res,next) {
     req.decoded = decoded;
     next();
     })
-
+}
+// admin middlewire
+const VerifyAdmin=async(req,res,next)=> {
+  const email = req.decoded.email;
+  const query = {email:email};
+  const user = await usersCollection.findOne(query);
+  if (user.type !== 'admin') {
+    return res.status(403).send({ message:'forbidden access'})
+  }
+  next();
 }
 
 
