@@ -37,7 +37,8 @@ const productsCollection = client.db('ecomerce-assignment-12').collection('produ
 const usersCollection = client.db('ecomerce-assignment-12').collection('users')
 app.get('/products/:id',async(req,res)=>{
   const id = req.params.id;
-  const query = {brand: id};
+  console.log(id)
+  const query = {brand:id};
   const products = await productsCollection.find(query).toArray();
   res.send(products)
 })
@@ -103,6 +104,28 @@ app.post('/users',async(req,res)=>{
   const result = await usersCollection.insertOne(user)
   res.send(result)
 })
+
+// find a sigle seller product
+app.get('/products/seller/:email',VerifyJwt,async(req,res)=>{
+  const email = req.params.email;
+  const query = {email:email}
+  const result = await productsCollection.find(query).toArray();
+  res.send(result)
+})
+
+// advertise iteam
+// app.get('/advertise',(req,res)=>{
+  
+// })
+
+// delete product
+app.delete('/product/delete/:id',VerifyJwt, async(req,res)=>{
+  const id = req.params.id;
+  console.log(id)
+  const cursor = {_id : ObjectId(id)};
+  const result = await productsCollection.deleteOne(cursor);
+  res.send(result)
+ })
 
 
 app.get('/jwt',async(req, res)=>{
