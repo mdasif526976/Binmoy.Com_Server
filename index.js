@@ -35,6 +35,7 @@ const run=async()=>{
   try{     
 const productsCollection = client.db('ecomerce-assignment-12').collection('products')
 const usersCollection = client.db('ecomerce-assignment-12').collection('users')
+const odersCollection = client.db('ecomerce-assignment-12').collection('order')
 app.get('/products/:id',async(req,res)=>{
   const id = req.params.id;
   console.log(id)
@@ -98,6 +99,21 @@ app.get('/users/findSeler/:email',VerifyJwt,VerifySeller, async(req,res)=>{
    res.send(user)
   })
 
+  //seller verified
+app.put('/users/admin/:id',VerifyJwt,VerifyAdmin,async( req,res)=>{
+  const id = req.params.id;
+ const filter = {_id: ObjectId(id)};
+ const options = {upsert:true}
+ const updateDoc= {
+   $set:{
+    account:'verifed'
+   }
+  
+ }
+ const result = await usersCollection.updateOne(filter,updateDoc,options);
+ res.send(result)
+})
+
 // make save user
 app.post('/users',async(req,res)=>{
   const user = req.body;
@@ -119,14 +135,35 @@ app.get('/products/seller/:email',VerifyJwt,async(req,res)=>{
 // })
 
 // delete product
-app.delete('/product/delete/:id',VerifyJwt, async(req,res)=>{
+app.delete('/product/delete/:id',VerifyJwt,VerifySeller, async(req,res)=>{
   const id = req.params.id;
-  console.log(id)
   const cursor = {_id : ObjectId(id)};
   const result = await productsCollection.deleteOne(cursor);
   res.send(result)
  })
 
+ // oders 
+ app.post('/order',VerifyJwt,async(req,res)=>{
+    const order = req.body;
+   const result = await odersCollection.insertOne(order);
+   res.send(result)
+ })
+
+ app.get('/orders/:email',VerifyJwt,async(req,res)=>{
+ const email = req.params.email;
+ const query={
+  buyerEmail:email
+ }
+ const orders = await odersCollection.find(query).toArray();
+ res.send(orders);
+ })
+
+ // user get
+ app.get('/users',async(req, res)=>{
+  const query={};
+  const users = await usersCollection.find(query).toArray();
+  res.send(users);
+ })
 
 app.get('/jwt',async(req, res)=>{
   const email = req.query.email;
