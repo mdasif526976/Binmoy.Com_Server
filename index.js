@@ -106,7 +106,7 @@ app.put('/users/admin/:id',VerifyJwt,VerifyAdmin,async( req,res)=>{
  const options = {upsert:true}
  const updateDoc= {
    $set:{
-    account:'verifed'
+    account:'verified'
    }
   
  }
@@ -130,9 +130,24 @@ app.get('/products/seller/:email',VerifyJwt,async(req,res)=>{
 })
 
 // advertise iteam
-// app.get('/advertise',(req,res)=>{
-  
-// })
+app.put('/advertise/:product',async(req,res)=>{
+  const id = req.params.product;
+  const filter = {_id:ObjectId(id)};
+  const options = {upsert:true};
+  const updateDoc= {
+   $set:{
+    advertise:'true'
+   }}
+   const result = await productsCollection.updateOne(filter,updateDoc,options);
+     res.send(result)
+})
+
+// Flesh sale Product limit 3
+app.get('/fleshHome',async(req,res)=>{
+  const query = {};
+  const advertiseItam = await productsCollection.find(query).toArray()
+  res.send(advertiseItam);
+})
 
 // delete product
 app.delete('/product/delete/:id',VerifyJwt,VerifySeller, async(req,res)=>{
@@ -142,7 +157,15 @@ app.delete('/product/delete/:id',VerifyJwt,VerifySeller, async(req,res)=>{
   res.send(result)
  })
 
- // oders 
+// delete order
+app.delete('/order/delete/:id',async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id : ObjectId(id)};
+  const result = await odersCollection.deleteOne(query);
+  res.send(result)
+})
+
+ // orders 
  app.post('/order',VerifyJwt,async(req,res)=>{
     const order = req.body;
    const result = await odersCollection.insertOne(order);
@@ -156,6 +179,14 @@ app.delete('/product/delete/:id',VerifyJwt,VerifySeller, async(req,res)=>{
  }
  const orders = await odersCollection.find(query).toArray();
  res.send(orders);
+ })
+
+ // sigle oder find
+ app.get('/order/:id',async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id:ObjectId(id)}
+  const result = await odersCollection.findOne(query);
+  res.send(result)
  })
 
  // user get
