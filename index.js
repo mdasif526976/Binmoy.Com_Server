@@ -144,7 +144,7 @@ app.put('/advertise/:product',async(req,res)=>{
 
 // Flesh sale Product limit 3
 app.get('/fleshHome',async(req,res)=>{
-  const query = {};
+  const query = {advertise:'true'};
   const advertiseItam = await productsCollection.find(query).toArray()
   res.send(advertiseItam);
 })
