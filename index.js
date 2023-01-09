@@ -187,14 +187,14 @@ app.delete('/order/delete/:id',async(req,res)=>{
  })
 
  // get report itams
- app.get('/reportIteam',async(req,res)=>{
+ app.get('/reportIteam',VerifyJwt,VerifyAdmin,async(req,res)=>{
   const query = {report:'true'};
   const result = await productsCollection.find(query).toArray();
   res.send(result);
  })
 
  // request report iteam
- app.put('/reportIteam/:id',async(req,res)=>{
+ app.put('/reportIteam/:id',VerifyJwt,async(req,res)=>{
   const id = req.params.id;
   const filter = {_id:ObjectId(id)};
   const update = {
@@ -215,7 +215,7 @@ app.delete('/order/delete/:id',async(req,res)=>{
  })
 
 // payment on stripe
-app.post('/create-payment-intent', async (req, res) => {
+app.post('/create-payment-intent',VerifyJwt,async (req, res) => {
   const booking = req.body;
   const price = booking.price;
   const amount = price * 100;
@@ -259,20 +259,20 @@ res.send(result);
 })
 
  // user get
- app.get('/users',async(req, res)=>{
+ app.get('/users',VerifyJwt,VerifyAdmin,async(req, res)=>{
   const query= {type:'User'};
   const users = await usersCollection.find(query).toArray();
   res.send(users);
  })
 
  // seller get
- app.get('/seller',async(req, res)=>{
+ app.get('/seller',VerifyJwt,VerifyAdmin,async(req, res)=>{
   const query={type:'Seller'};
   const users = await usersCollection.find(query).toArray();
   res.send(users);
  })
 
-app.delete('/delete/user/:id',async(req,res)=>{
+app.delete('/delete/user/:id',VerifyJwt,VerifyAdmin,async(req,res)=>{
   const id = req.params.id;
   const query = {_id:ObjectId(id)};
   const result = await usersCollection.deleteOne(query)
