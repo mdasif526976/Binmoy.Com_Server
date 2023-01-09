@@ -3,6 +3,7 @@ const app = express();
 const jwt = require('jsonwebtoken');
 require ('dotenv').config();
 const cors = require('cors');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const { query } = require('express');
 const port = process.env.PORT || 5000;
@@ -36,13 +37,17 @@ const run=async()=>{
 const productsCollection = client.db('ecomerce-assignment-12').collection('products')
 const usersCollection = client.db('ecomerce-assignment-12').collection('users')
 const odersCollection = client.db('ecomerce-assignment-12').collection('order')
+const paymentsCollection = client.db('ecomerce-assignment-12').collection('payments')
 app.get('/products/:id',async(req,res)=>{
   const id = req.params.id;
   console.log(id)
   const query = {brand:id};
   const products = await productsCollection.find(query).toArray();
-  res.send(products)
+  const filter = products.filter(product=> product.sold == 'true' );
+  res.send(filter)
 })
+
+
 
 // middlewires
 // admin middlewire
@@ -150,7 +155,7 @@ app.get('/fleshHome',async(req,res)=>{
 })
 
 // delete product
-app.delete('/product/delete/:id',VerifyJwt,VerifySeller, async(req,res)=>{
+app.delete('/product/delete/:id',VerifyJwt,async(req,res)=>{
   const id = req.params.id;
   const cursor = {_id : ObjectId(id)};
   const result = await productsCollection.deleteOne(cursor);
@@ -181,6 +186,26 @@ app.delete('/order/delete/:id',async(req,res)=>{
  res.send(orders);
  })
 
+ // get report itams
+ app.get('/reportIteam',async(req,res)=>{
+  const query = {report:'true'};
+  const result = await productsCollection.find(query).toArray();
+  res.send(result);
+ })
+
+ // request report iteam
+ app.put('/reportIteam/:id',async(req,res)=>{
+  const id = req.params.id;
+  const filter = {_id:ObjectId(id)};
+  const update = {
+    $set:{
+      report:'true'
+    }
+  }
+  const result = await productsCollection.updateOne(filter,update);
+  res.send(result)
+ })
+
  // sigle oder find
  app.get('/order/:id',async(req,res)=>{
   const id = req.params.id;
@@ -189,12 +214,71 @@ app.delete('/order/delete/:id',async(req,res)=>{
   res.send(result)
  })
 
+// payment on stripe
+app.post('/create-payment-intent', async (req, res) => {
+  const booking = req.body;
+  const price = booking.price;
+  const amount = price * 100;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+      currency: 'usd',
+      amount: amount,
+      "payment_method_types": [
+          "card"
+      ]
+  });
+  res.send({
+      clientSecret: paymentIntent.client_secret,
+  });
+});
+
+// save payments
+app.post('/payments',async(req,res)=>{
+  const payment = req.body;
+  const result = await paymentsCollection.insertOne(payment);
+  const id = payment.orderId;
+  const ProductId = payment.ProductId;
+  const filter = {_id:ObjectId(id)}
+  const updatedDoc = {
+    $set: {
+        paid: true,
+        transactionId: payment.transactionId
+    }
+}
+const updatedResult = await odersCollection.updateOne(filter, updatedDoc);
+const query = {_id:ObjectId(ProductId)};
+const updated = {
+  $set: {
+      sold: false,
+  }
+}
+const update = await productsCollection.updateOne(query,updated)
+
+res.send(result);
+
+})
+
  // user get
  app.get('/users',async(req, res)=>{
-  const query={};
+  const query= {type:'User'};
   const users = await usersCollection.find(query).toArray();
   res.send(users);
  })
+
+ // seller get
+ app.get('/seller',async(req, res)=>{
+  const query={type:'Seller'};
+  const users = await usersCollection.find(query).toArray();
+  res.send(users);
+ })
+
+app.delete('/delete/user/:id',async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id:ObjectId(id)};
+  const result = await usersCollection.deleteOne(query)
+  res.send(result)
+  console.log(id)
+})
 
 app.get('/jwt',async(req, res)=>{
   const email = req.query.email;
